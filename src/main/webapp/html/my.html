@@ -1,11 +1,347 @@
-<html>
+<!doctype html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>RPG</title>
-    <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
-    <link href="/css/my.css" rel="stylesheet">
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9' crossorigin='anonymous'>
+    <script src=https://code.jquery.com/jquery-3.6.4.min.js></script>
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js' integrity='sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm' crossorigin='anonymous'></script>
 </head>
-<body>
+<body onload="Player_list(0)">
 <h1>RPG admin panel</h1>
+
+<label for ="selectPages">Count per page:</label>
+<select id="selectPages" onchange="Player_list(0)">
+    <option value = "3">3</option>
+    <option value = "5">5</option>
+    <option value = "10">10</option>
+    <option value = "20">20</option>
+</select>
+<!-- Trigger the modal with a button -->
+<button type="button" class="btn btn-primary float-center" data-bs-toggle="modal" data-bs-target="#myModal">
+    Create Player
+</button>
+<table class="table table-striped table-bordered" id="table1">
+    <thead class="thead-light">
+    <tr>
+        <th scope="col">#</th>
+        <th scope="col">Name</th>
+        <th scope="col">Title</th>
+        <th scope="col">Race</th>
+        <th scope="col">Profession</th>
+        <th scope="col">Level</th>
+        <th scope="col">Birthday</th>
+        <th scope="col">Banned</th>
+        <th scope="col">Edit</th>
+        <th scope="col">Delete</th>
+    </tr>
+    </thead>
+    <tbody id ='tbody1'>
+    </tbody>
+</table>
+<div id="paging">Pages:</div>
+
+<button type="button" class="btn btn-primary" onclick="createPlayer()"> Save</button>
+
+
+<!-- The Modal -->
+<div class="modal" id="myModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">Modal Heading</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body">
+                <h2>
+                    Create new account:
+                </h2>
+
+                <table id = 'table2'>
+                    <tr>
+                        <td><label for = 'input_name_new'> Name:</label></td>
+                        <td><input id='input_name_new' maxlength="12" name ='name' placeholder required size="12" type='text'></td>
+                    </tr>
+                    <tr>
+                        <td><label for = 'input_title_new'> Title:</label></td>
+                        <td><input id='input_title_new' maxlength="30" name ='title' required size="30" type='text'></td>
+                    </tr>
+                    <tr>
+                        <td><label for = 'input_race_new'> Race:</label></td>
+                        <td> <select class="custom-select" id='input_race_new' name ='race'>
+                            <option value='HUMAN'>HUMAN</option>
+                            <option value='DWARF'>DWARF</option>
+                            <option value='ELF'>ELF</option>
+                            <option value='GIANT'>GIANT</option>
+                            <option value='ORC'>ORC</option>
+                            <option value='TROLL'>TROLL</option>
+                            <option value='HOBBIT'>HOBBIT</option>
+                        </select></td>
+                    </tr>
+                    <tr>
+                        <td><label for = 'input_profession_new'> Profession:</label></td>
+                        <td><select class="custom-select" id='input_profession_new' name ='profession'>
+                            <option value='WARRIOR'>WARRIOR</option>
+                            <option value='ROGUE'>ROGUE</option>
+                            <option value='SORCERER'>SORCERER</option>
+                            <option value='CLERIC'>CLERIC</option>
+                            <option value='PALADIN'>PALADIN</option>
+                            <option value='NAZGUL'>NAZGUL</option>
+                            <option value='WARLOCK'>WARLOCK</option>
+                            <option value='DRUID'>DRUID</option>
+                        </select></td>
+                    </tr>
+                    <tr>
+                        <td><label for = 'input_level_new'> Level:</label></td>
+                        <td><input id='input_level_new' max="100" min="0" name ='level' type='number'></td>
+                    </tr>
+                    <tr>
+                        <td><label for = 'input_birthday_new'> Birthday:</label></td>
+                        <td><input id='input_birthday_new' max="2024-01-01" min="1950-01-01" name ='level' type='date'></td>
+                    </tr>
+                    <tr>
+                        <td><label for = 'input_banned_new'> Banned:</label></td>
+                        <td><select class="custom-select" id='input_banned_new' name ='banned'>
+                            <option value='true'>true</option>
+                            <option value='false'>false</option>
+                        </select></td>
+                    </tr>
+
+                </table>
+            </div>
+
+            <!-- Modal footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary"  data-bs-dismiss="modal" onclick="createPlayer()">Create</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function Player_list(pageNumber){
+        $('#table1').children('#tbody1').children().remove();
+       <!-- $("tr:has(td)").remove();-->
+
+        let countPerPage = $('#selectPages').val();
+        if (countPerPage== null){
+            countPerPage = 3;
+        }
+
+
+        $.get("/rest/players?"+"pageSize="+countPerPage+"&pageNumber="+pageNumber, function (response){
+            $.each(response,function (i,item){
+                $('<tr>').html("<th scope='row'>"
+                    +item.id + "</th><td>"
+                    +item.name + "</td><td>"
+                    +item.title + "</td><td>"
+                    +item.race + "</td><td>"
+                    +item.profession + "</td><td>"
+                    +item.level + "</td><td>"
+                    +new Date(item.birthday).toLocaleDateString() + "</td><td>"
+                    +item.banned + "</td><td>"
+                    + "<button class ='btn btn-secondary' id='btn_edit_"+item.id+"' onclick='editPlayer("+item.id+")'"+">"
+                    + "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-pencil-square' viewBox='0 0 16 16'>"
+                    + "<path d='M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z'/>"
+                    + "<path fill-rule='evenodd' d='M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z'/>"
+                    + "</svg>"
+                    + "Edit</button></td><td>"
+                    + "<button class ='btn btn-secondary' id='btn_delete_"+item.id+"' onclick='deletePalyer("+item.id+")'"+">"
+                     + "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-trash3-fill' viewBox='0 0 16 16'>"
+                    + " <path d='M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z'/>"
+                    + "</svg>"
+                    + "Delete</button></td></tr>"
+                ).appendTo("#table1");
+
+            });
+        });
+        let totalCount = getTotal_Players();
+
+
+        let parent = $('#paging');
+       parent.children().remove();
+
+
+        let pagesCount = Math.ceil(totalCount/countPerPage);
+        for (let i = 0; i< pagesCount;i++){
+            let button_tag= "<button>" + (i+1) + "</button>";
+            let btn = $(button_tag)
+                .attr('id',"paging_btn"+i)
+                .attr('onclick',"Player_list("+i+")")
+                .addClass('btn btn-light');
+            $('#paging').append(btn);
+        }
+        let identifier = "#paging_btn"+pageNumber;
+           $(identifier).css('color',"red");
+
+    }
+
+    function getTotal_Players(){
+        let count=0;
+        $.ajax({
+            url: "rest/players/count",
+            async: false,
+            success: function (result) {
+                count= parseInt(result);
+            }
+        })
+        return count;
+    }
+
+    function editPlayer(id) {
+        $('#btn_edit_'+id).html("<img src='/img/save.png'>");
+        $('#btn_delete_'+id).remove();
+        let children = $('#btn_edit_'+id).parent().parent().children();
+        //row name input Text
+        children[1].innerHTML ="<input id='input_name_'"+id+"' type = 'text' value = '"+children[1].innerHTML+"'>"
+        //row title input Text
+        children[2].innerHTML ="<input id='input_title_'"+id+"' type = 'text' value = '"+children[2].innerHTML+"'>"
+        //dropdown for Race
+        let currentRace = children[3].innerHTML;
+        children[3].innerHTML=getRaceDropDownParams(id);
+        $('#select_race'+id).val(currentRace).change();
+        //dropdown for Profession
+        let currentProfession = children[4].innerHTML;
+        children[4].innerHTML=getProfessionDropDownParams(id);
+        $('#select_profession'+id).val(currentProfession).change();
+        //dropdown for Banned
+        let currentBanned = children[7].innerHTML;
+        children[7].innerHTML=getBannedDropDownParams(id);
+        $('#select_banned'+id).val(currentBanned).change();
+
+        //save Players throw JSON
+        $('#btn_edit_'+id).attr('onclick',"savePlayer("+id+")");
+
+    }
+
+    function savePlayer(id) {
+        let value_name = $('#input_name_'+id).val();
+        let value_title = $('#input_title_'+id).val();
+        let value_race = $('#select_race'+id).val();
+        let value_profession = $('#select_profession'+id).val();
+        let value_banned = $('#select_banned'+id).val();
+        $.ajax({
+            url: "/rest/players/"+id,
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            async: false,
+            data: JSON.stringify({
+                "name":value_name,
+                "title":value_title,
+                "race": value_race,
+                "profession": value_profession,
+                "banned": value_banned
+            }),
+            success: function () {
+                Player_list(getCurrentPage());
+            }
+        })
+    }
+
+    function getRaceDropDownParams(id) {
+        return "<select id='select_race"+id+"' name ='race' >"
+            +"<option value='HUMAN'>HUMAN</option>"
+            +"<option value='DWARF'>DWARF</option>"
+            +"<option value='ELF'>ELF</option>"
+            +"<option value='GIANT'>GIANT</option>"
+            +"<option value='ORC'>ORC</option>"
+            +"<option value='TROLL'>TROLL</option>"
+            +"<option value='HOBBIT'>HOBBIT</option>";
+
+    }
+    function getProfessionDropDownParams(id) {
+        return "<select id='select_profession"+id+"' name ='race' >"
+            +"<option value='WARRIOR'>WARRIOR</option>"
+            +"<option value='ROGUE'>ROGUE</option>"
+            +"<option value='SORCERER'>SORCERER</option>"
+            +"<option value='CLERIC'>CLERIC</option>"
+            +"<option value='PALADIN'>PALADIN</option>"
+            +"<option value='NAZGUL'>NAZGUL</option>"
+            +"<option value='WARLOCK'>WARLOCK</option>"
+            +"<option value='DRUID'>DRUID</option>";
+
+    }
+    function getBannedDropDownParams(id) {
+        return "<select id='select_banned"+id+"' name ='race' >"
+            +"<option value='false'>false</option>"
+            +"<option value='true'>true</option>";
+
+    }
+
+
+    function deletePalyer(id) {
+        let url = "/rest/players/" +id;
+        $.ajax({
+            url:url,
+            type: 'DELETE',
+            success: function () {
+                console.log(getCurrentPage());
+                Player_list(getCurrentPage());
+            }
+        })
+    }
+
+    function getCurrentPage(){
+        let currentPage=1;
+        $('button:parent(div)').each(function () {
+            if ($(this).css('color') === 'rgb(255, 0, 0)'){
+                currentPage=$(this).text();
+            }
+        })
+        return parseInt(currentPage)-1;
+
+    }
+
+    function createPlayer(){
+        let value_name = $('#input_name_new').val();
+        let value_title = $('#input_title_new').val();
+        let value_race = $('#input_race_new').val();
+        let value_profession = $('#input_profession_new').val();
+        let value_level = $('#input_level_new').val();
+        let value_birthday = $('#input_birthday_new').val();
+        let value_banned = $('#input_banned_new').val();
+        $.ajax({
+            url: "/rest/players",
+            type: 'POST',
+            dataType: 'json',
+            contentType: 'application/json;charset=UTF-8',
+            async: false,
+            data: JSON.stringify({
+                "name":value_name,
+                "title":value_title,
+                "race": value_race,
+                "profession": value_profession,
+                "level":value_level,
+                "birthday":new Date(value_birthday).getTime(),
+                "banned": value_banned
+            }),
+            success: function () {
+                $('#input_name_new').val("");
+                $('#input_title_new').val("");
+                $('#select_race_new').val("");
+                $('#select_profession_new').val("");
+                $('#input_level_new').val("");
+                $('#input_birthday_new').val("");
+                $('#select_banned_new').val("");
+                Player_list(getCurrentPage());
+            }
+        })
+    }
+    const myModal = document.getElementById('myModal')
+    const myInput = document.getElementById('myInput')
+
+    myModal.addEventListener('shown.bs.modal', () => {
+        myInput.focus()
+    })
+</script>
 
 </body>
 </html>
